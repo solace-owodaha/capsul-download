@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0-beta.1",
+  "build_number": 2,
+  "built_at_utc": "2026-11-04T23:43:30Z",
+  "expires_at_utc": "2026-11-06T23:59:59Z",
+  "apk_url": "./Capsul-v1.0.0-beta.1.apk",
+  "changelog": [
+    "Plan your week in one tap: Build recurring routines (like a Morning or Workout ritual) and apply them across your calendar in seconds.",
+    "New calendar view: Tap to open the full month calendar and easily plan ahead for any day.",
+    "Brand-new look: Fresh app icon on your home screen and a playful animated mascot that greets you when you open the app.",
+    "Faster, lighter download: Cut the download size down by 65% so the app installs almost instantly."
+  ],
+  "revoked": false
+}

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Capsul Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" type="image/png" href="app_icon.png">
+</head>
+<body>
+  <div class="bg-ambient"></div>
+
+  <main class="portal-container">
+    <!-- Brand Hero -->
+    <header class="brand-hero">
+      <div class="mascot-wrap">
+        <div class="mascot-aura"></div>
+        <img src="capsul_mascot.png" alt="Capsul Mascot" class="mascot-img">
+      </div>
+      <h1 class="brand-title">capsul<span class="brand-dot">.</span></h1>
+      <p class="brand-tag">Weekly Preview</p>
+    </header>
+
+    <!-- Main Action Surface -->
+    <section class="action-surface">
+      <div id="statusPill" class="status-pill status-active">
+        <span id="statusText">Active Build</span>
+      </div>
+
+      <a id="downloadBtn" href="./app-release.apk" class="btn-cta">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Download APK</span>
+        <span id="versionBadge" class="btn-cta-version"></span>
+      </a>
+
+      <!-- What's New -->
+      <div id="highlightsBlock" class="highlights-block">
+        <div class="highlights-header">What's New</div>
+        <div id="highlightsList" class="highlights-list">
+          <div class="highlight-chip">Loading release preview...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footnote -->
+    <footer class="platform-footnote">
+      <span>Android 8.0+</span>
+      <span class="footnote-sep">/</span>
+      <span>Preserves existing data</span>
+    </footer>
+  </main>
+
+  <script>
+    async function initPreviewPortal() {
+      const statusPill = document.getElementById('statusPill');
+      const statusText = document.getElementById('statusText');
+      const downloadBtn = document.getElementById('downloadBtn');
+      const versionBadge = document.getElementById('versionBadge');
+      const highlightsList = document.getElementById('highlightsList');
+
+      try {
+        const response = await fetch('version.json?t=' + Date.now());
+        if (!response.ok) throw new Error('Status unavailable');
+        const data = await response.json();
+
+        // Version & Direct Download
+        if (data.version) {
+          versionBadge.innerText = data.version;
+        }
+        if (data.apk_url) {
+          downloadBtn.href = data.apk_url;
+          downloadBtn.setAttribute('download', data.apk_url.replace(/^\.\//, ''));
+        }
+
+        // Expiration Logic
+        if (data.expires_at_utc) {
+          const expiry = new Date(data.expires_at_utc);
+          const now = new Date();
+          const diffMs = expiry - now;
+
+          if (data.revoked || diffMs <= 0) {
+            statusPill.className = 'status-pill status-expired';
+            statusText.innerText = 'Build Expired';
+            downloadBtn.classList.add('disabled');
+            downloadBtn.innerHTML = '<span>Preview Ended</span>';
+          } else {
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor((diffMs / (1000 * 60 * 60)) % 24);
+
+            if (diffDays <= 2) {
+              statusPill.className = 'status-pill status-expiring';
+              const remaining = diffDays > 0 
+                ? `${diffDays}d ${diffHours}h left` 
+                : `${diffHours}h left`;
+              statusText.innerText = `Expiring Soon (${remaining})`;
+            } else {
+              statusPill.className = 'status-pill status-active';
+              statusText.innerText = `Active (${diffDays}d left)`;
+            }
+          }
+        }
+
+        // Highlights List
+        if (Array.isArray(data.changelog) && data.changelog.length > 0) {
+          highlightsList.innerHTML = '';
+          data.changelog.forEach(item => {
+            const chip = document.createElement('div');
+            chip.className = 'highlight-chip';
+            chip.innerText = item;
+            highlightsList.appendChild(chip);
+          });
+        } else {
+          highlightsList.innerHTML = '<div class="highlight-chip">General stability and performance improvements</div>';
+        }
+      } catch (err) {
+        // Smooth resilient fallback
+        statusPill.className = 'status-pill status-active';
+        statusText.innerText = 'Active Build';
+        versionBadge.innerText = 'v1.0.0-beta';
+        highlightsList.innerHTML = '<div class="highlight-chip">Latest beta preview release</div>';
+      }
+    }
+
+    initPreviewPortal();
+  </script>
+</body>
+</html>
