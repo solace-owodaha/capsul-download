@@ -88,6 +88,21 @@
       }
     }
 
+    function isAtLeastBeta(version) {
+      if (!version || typeof version !== 'string') return false;
+      const cleaned = version.trim().replace(/^[vV]/, '');
+      const m = /^(\d+)\.(\d+)\.(\d+)(?:-(.+))?$/.exec(cleaned);
+      if (!m) return false;
+      const major = Number(m[1]);
+      const minor = Number(m[2]);
+      const patch = Number(m[3]);
+      if (major !== 1) return major > 1;
+      if (minor !== 0) return minor > 0;
+      if (patch !== 0) return patch > 0;
+      const pre = (m[4] || '').toLowerCase();
+      return pre === '' || pre >= 'beta';
+    }
+
     async function initPreviewPortal() {
       const statusPill = document.getElementById('statusPill');
       const statusText = document.getElementById('statusText');
@@ -137,10 +152,12 @@
           }
         }
 
-        // Render Version History (Uncollapsed, Uncombined)
-        const releases = Array.isArray(data.releases) && data.releases.length > 0
-          ? data.releases
-          : (Array.isArray(data.changelog) && data.changelog.length > 0
+        // Render Version History (v1.0.0-beta and above only)
+        const rawReleases = Array.isArray(data.releases) ? data.releases : [];
+        const filteredReleases = rawReleases.filter(rel => isAtLeastBeta(rel && rel.version));
+        const releases = filteredReleases.length > 0
+          ? filteredReleases
+          : (Array.isArray(data.changelog) && data.changelog.length > 0 && (!data.version || isAtLeastBeta(data.version))
               ? [{ version: data.version || 'Latest', date: '', is_current: true, changelog: data.changelog }]
               : null);
 
